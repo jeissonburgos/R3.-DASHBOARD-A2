@@ -279,7 +279,7 @@ f2_col1, f2_col2 = st.columns(2)
 with f2_col1:
     st.markdown("### 3. Diagrama Tornado: Sensibilidad del ROI")
     
-    # Cálculo de impacto diferencial (P90 - P10) por factor sobre el ROI
+    # Cálculo de impacto diferencial por factor sobre el ROI
     impacto_lic = (df_sim[df_sim["KRI Licenciamiento (Días)"] > np.percentile(kri_licencias, 80)]["ROI"].mean()
                    - df_sim[df_sim["KRI Licenciamiento (Días)"] < np.percentile(kri_licencias, 20)]["ROI"].mean())
     impacto_log = (df_sim[df_sim["KRI Sobrecosto Logístico (%)"] > np.percentile(kri_logistica, 80)]["ROI"].mean()
@@ -294,19 +294,31 @@ with f2_col1:
 
     colores_tornado = ["#D9534F" if val < 0 else "#2E7D32" for val in df_tornado["Impacto_ROI"]]
 
+    # Margen horizontal dinámico para que los textos numéricos nunca se recorten
+    max_val = max(abs(df_tornado["Impacto_ROI"].min()), abs(df_tornado["Impacto_ROI"].max())) * 1.45
+
     fig_tornado = go.Figure(go.Bar(
         x=df_tornado["Impacto_ROI"],
         y=df_tornado["Variable"],
         orientation='h',
-        marker_color=colores_tornado,
-        text=[f"{val:+.2f}%" for val in df_tornado["Impacto_ROI"]],
-        textposition="outside"
+        marker=dict(color=colores_tornado, line=dict(width=1, color="#0F2537")),
+        text=[f"<b>{val:+.2f}%</b>" for val in df_tornado["Impacto_ROI"]],
+        textposition="outside",
+        cliponaxis=False,
+        textfont=dict(size=13, color="#0F2537")
     ))
     fig_tornado.update_layout(
         template="plotly_white",
-        margin=dict(l=20, r=20, t=30, b=20),
-        xaxis_title="Desviación Promedio en el ROI (%)",
-        height=360
+        margin=dict(l=30, r=40, t=35, b=30),
+        xaxis=dict(
+            title=dict(text="Desviación Promedio en el ROI (%)", font=dict(size=13, color="#0F2537")),
+            tickfont=dict(size=12, color="#0F2537"),
+            range=[-max_val, max_val]
+        ),
+        yaxis=dict(
+            tickfont=dict(size=13, color="#0F2537", family="Segoe UI")
+        ),
+        height=380
     )
     st.plotly_chart(fig_tornado, use_container_width=True)
 
@@ -314,6 +326,9 @@ with f2_col2:
     st.markdown("### 4. Matriz de Exposición de Riesgos Críticos")
     df_riesgos = pd.DataFrame(cfg["riesgos"])
     
+    # Etiquetas cortas y numeradas para que no se traslapen visualmente
+    df_riesgos["Etiqueta"] = [f"<b>R{i+1}</b>" for i in range(len(df_riesgos))]
+
     fig_bubble = px.scatter(
         df_riesgos,
         x="Prob",
@@ -321,16 +336,39 @@ with f2_col2:
         size="Severidad",
         color="Categoria",
         hover_name="Riesgo",
-        text="Riesgo",
-        size_max=38,
-        color_discrete_sequence=["#D9534F", "#0F2537", "#2E7D32", "#F0AD4E"]
+        text="Etiqueta",
+        size_max=42,
+        color_discrete_sequence=["#D9534F", "#0F2537", "#2E7D32", "#E67E22"]
     )
-    fig_bubble.update_traces(textposition='top center')
+    # Burbujas nítidas con texto centrado en blanco de alto contraste
+    fig_bubble.update_traces(
+        textposition='middle center',
+        textfont=dict(size=13, color="#FFFFFF"),
+        marker=dict(opacity=0.88, line=dict(width=1.5, color="#FFFFFF"))
+    )
     fig_bubble.update_layout(
         template="plotly_white",
-        margin=dict(l=20, r=20, t=30, b=20),
-        xaxis=dict(title="Probabilidad de Ocurrencia", range=[0.1, 1.0]),
-        yaxis=dict(title="Impacto Estratégico (0-1)", range=[0.2, 1.05]),
-        height=360
+        margin=dict(l=30, r=30, t=35, b=30),
+        xaxis=dict(
+            title=dict(text="Probabilidad de Ocurrencia", font=dict(size=13, color="#0F2537")),
+            tickfont=dict(size=12, color="#0F2537"),
+            range=[0.15, 0.90]
+        ),
+        yaxis=dict(
+            title=dict(text="Impacto Estratégico (0-1)", font=dict(size=13, color="#0F2537")),
+            tickfont=dict(size=12, color="#0F2537"),
+            range=[0.25, 1.05]
+        ),
+        legend=dict(
+            title=dict(text="Categoría", font=dict(size=12, color="#0F2537")),
+            font=dict(size=11, color="#0F2537")
+        ),
+        height=380
     )
     st.plotly_chart(fig_bubble, use_container_width=True)
+
+    # Mini convención inferior de riesgos clara y legible
+    st.markdown(
+        " ".join([f"**R{i+1}:** {r['Riesgo']} |" for i, r in enumerate(cfg['riesgos'])])[:-1],
+        help="Pasa el mouse sobre cualquier burbuja para consultar los detalles completos de severidad e impacto."
+    )
