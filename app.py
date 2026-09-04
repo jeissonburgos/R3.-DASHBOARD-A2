@@ -13,11 +13,7 @@ st.markdown("""
     /* Fondo general de la plataforma */
     .stApp {
         background-color: #F4F6F9;
-    }
-    /* Barra lateral en azul institucional oscuro */
-    [data-testid="stSidebar"] {
-        background-color: #0F2537;
-    }
+       }
     /* Textos claros dentro de la barra lateral */
     [data-testid="stSidebar"] * {
         color: #FFFFFF !important;
