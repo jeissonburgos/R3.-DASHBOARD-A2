@@ -4,8 +4,30 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Configuración de página
+# Configuración de página y paleta corporativa
 st.set_page_config(page_title="ECOGEN S.A. - Tablero de Riesgos y Estrategia", layout="wide")
+
+# Estilos CSS con paleta institucional (Azul Marino #0F2537, Gris Suave #F4F6F9 y Acentos)
+st.markdown("""
+    <style>
+    /* Fondo general de la plataforma */
+    .stApp {
+        background-color: #F4F6F9;
+    }
+    /* Barra lateral en azul institucional oscuro */
+    [data-testid="stSidebar"] {
+        background-color: #0F2537;
+    }
+    /* Textos claros dentro de la barra lateral */
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+    /* Color de títulos principales */
+    h1, h2, h3 {
+        color: #0F2537 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Título y contexto ejecutivo
 st.title("⚡ ECOGEN S.A. - Gestión Estratégica de Riesgos e Incertidumbre")
