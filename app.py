@@ -1,186 +1,291 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Configuración de página y paleta corporativa
-st.set_page_config(page_title="ECOGEN S.A. - Tablero de Riesgos y Estrategia", layout="wide")
+# ==============================================================================
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS CORPORATIVOS
+# ==============================================================================
+st.set_page_config(
+    page_title="ECOGEN S.A. - Tablero de Riesgos y Estrategia",
+    page_icon="⚡",
+    layout="wide"
+)
 
-# Estilos CSS con paleta institucional (Azul Marino #0F2537, Gris Suave #F4F6F9 y Acentos)
 st.markdown("""
     <style>
-    /* Fondo general de la plataforma */
+    /* Fondo general */
     .stApp {
         background-color: #F4F6F9;
-       }
-    /* Fondo naranja claro para la barra lateral */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    /* Barra lateral institucional */
     [data-testid="stSidebar"] {
-        background-color: #FFCC99 !important;
+        background-color: #0F2537;
     }
-    /* Textos oscuros dentro de la barra lateral para contraste con el naranja */
     [data-testid="stSidebar"] * {
-        color: #0F2537 !important;
+        color: #FFFFFF !important;
     }
-    /* Color de títulos principales */
-    h1, h2, h3 {
+    /* Títulos */
+    h1, h2, h3, h4 {
         color: #0F2537 !important;
+        font-weight: 700;
+    }
+    /* Tarjetas de métricas (KPIs) */
+    div[data-testid="stMetricValue"] {
+        color: #0F2537 !important;
+        font-weight: 800 !important;
+    }
+    div[data-testid="metric-container"] {
+        background-color: #FFFFFF;
+        padding: 1.1rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(15, 37, 55, 0.06);
+        border: 1px solid #E2E8F0;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Título y contexto ejecutivo
-st.title("⚡ ECOGEN S.A. - Gestión Estratégica de Riesgos e Incertidumbre")
-st.markdown("""
-**Oficina Estratégica de Riesgos (OER)** | Modelo Cuantitativo Monte Carlo (1.000 iteraciones)  
-Monitoreo de objetivos estratégicos (OKR), indicadores de desempeño (KPI) y factores de riesgo (KRI).
-""")
-st.markdown("---")
-st.markdown("""
-**Oficina Estratégica de Riesgos (OER)** | Modelo Cuantitativo Monte Carlo (1.000 iteraciones)  
-Monitoreo de objetivos estratégicos (OKR), indicadores de desempeño (KPI) y factores de riesgo (KRI).
-""")
-st.markdown("---")
+# ==============================================================================
+# 2. CONTROLES EN LA BARRA LATERAL
+# ==============================================================================
+st.sidebar.markdown("### ⚙️ Parámetros de Simulación")
+n_iteraciones = st.sidebar.slider(
+    "Número de iteraciones Monte Carlo:",
+    min_value=500,
+    max_value=5000,
+    value=1000,
+    step=100
+)
 
-# Barra lateral: Parámetros y Filtros
-st.sidebar.header("⚙️ Parámetros de Simulación")
-n_sim = st.sidebar.slider("Número de iteraciones Monte Carlo:", min_value=500, max_value=5000, value=1000, step=500)
-programa_sel = st.sidebar.selectbox("Filtrar por Programa Estratégico:", ["Portafolio Total", "Solar Equinox", "Eólica Andina", "HydroBalance"])
+programa_sel = st.sidebar.selectbox(
+    "Filtrar por Programa Estratégico:",
+    ["Portafolio Total", "Solar Equinox", "Eólica Andina", "HydroBalance"]
+)
 
-# Semilla fija para reproducibilidad
+# ==============================================================================
+# 3. BASE DE DATOS Y PERFILES DINÁMICOS POR PROGRAMA
+# ==============================================================================
+perfiles = {
+    "Portafolio Total": {
+        "desc": "Consolidado corporativo multitecnología (Solar, Eólico e Hídrico). Diversificación balanceada de riesgos.",
+        "roi_mean": 12.0, "roi_std": 1.45,
+        "lic_mean": 35.0, "lic_std": 8.0,
+        "log_mean": 15.0, "log_std": 3.2,
+        "cap_mean": 85.0, "cap_std": 5.5,
+        "okr_target": 12.0,
+        "riesgos": [
+            {"Riesgo": "Retraso Licencias Ambientales", "Prob": 0.48, "Impacto": 0.72, "Severidad": 34.5, "Categoria": "Regulatorio"},
+            {"Riesgo": "Sobrecosto Cadena Suministros", "Prob": 0.58, "Impacto": 0.55, "Severidad": 31.9, "Categoria": "Financiero"},
+            {"Riesgo": "Falla Capacidad Puesta en Marcha", "Prob": 0.32, "Impacto": 0.80, "Severidad": 25.6, "Categoria": "Operacional"},
+            {"Riesgo": "Volatilidad Tarifaria Mercado Mayorista", "Prob": 0.52, "Impacto": 0.65, "Severidad": 33.8, "Categoria": "Mercado"}
+        ]
+    },
+    "Solar Equinox": {
+        "desc": "Parque solar fotovoltaico de 150 MW. Sensible a importación de módulos solares y plazos UPME/ANLA.",
+        "roi_mean": 13.8, "roi_std": 2.10,
+        "lic_mean": 48.0, "lic_std": 11.0,
+        "log_mean": 18.5, "log_std": 4.1,
+        "cap_mean": 91.0, "cap_std": 4.0,
+        "okr_target": 12.5,
+        "riesgos": [
+            {"Riesgo": "Trámites y Consultas Previas (UPME/ANLA)", "Prob": 0.70, "Impacto": 0.85, "Severidad": 59.5, "Categoria": "Regulatorio"},
+            {"Riesgo": "Fluctuación Cambiaria y Aranceles Módulos", "Prob": 0.68, "Impacto": 0.62, "Severidad": 42.1, "Categoria": "Financiero"},
+            {"Riesgo": "Congestión Subestación y Conexión al SIN", "Prob": 0.55, "Impacto": 0.75, "Severidad": 41.2, "Categoria": "Técnico"},
+            {"Riesgo": "Afectación por Polvo y Clima Extremo", "Prob": 0.25, "Impacto": 0.35, "Severidad": 8.7, "Categoria": "Operacional"}
+        ]
+    },
+    "Eólica Andina": {
+        "desc": "Parque eólico en alta cordillera. Complejidad en transporte extrapesado y consulta con comunidades locales.",
+        "roi_mean": 11.2, "roi_std": 1.75,
+        "lic_mean": 38.0, "lic_std": 7.5,
+        "log_mean": 21.0, "log_std": 4.8,
+        "cap_mean": 82.0, "cap_std": 6.8,
+        "okr_target": 11.5,
+        "riesgos": [
+            {"Riesgo": "Transporte Vial Especial (Torres y Aspas)", "Prob": 0.78, "Impacto": 0.82, "Severidad": 63.9, "Categoria": "Logístico"},
+            {"Riesgo": "Licenciamiento Social y Acuerdos Territoriales", "Prob": 0.58, "Impacto": 0.86, "Severidad": 49.8, "Categoria": "Social"},
+            {"Riesgo": "Variabilidad del Factor Planta (Recurso Eólico)", "Prob": 0.42, "Impacto": 0.52, "Severidad": 21.8, "Categoria": "Técnico"},
+            {"Riesgo": "Demoras en Pólizas y Garantías Contractuales", "Prob": 0.35, "Impacto": 0.60, "Severidad": 21.0, "Categoria": "Financiero"}
+        ]
+    },
+    "HydroBalance": {
+        "desc": "Pequeña Central Hidroeléctrica (PCH). Alta predictibilidad operativa, regulada por variabilidad hidrológica.",
+        "roi_mean": 10.4, "roi_std": 0.95,
+        "lic_mean": 22.0, "lic_std": 4.2,
+        "log_mean": 11.0, "log_std": 2.1,
+        "cap_mean": 79.0, "cap_std": 4.8,
+        "okr_target": 10.0,
+        "riesgos": [
+            {"Riesgo": "Caudales Mínimos por Fenómeno del Niño", "Prob": 0.62, "Impacto": 0.78, "Severidad": 48.3, "Categoria": "Climático"},
+            {"Riesgo": "Inestabilidad Geotécnica y Sedimentación", "Prob": 0.46, "Impacto": 0.70, "Severidad": 32.2, "Categoria": "Operacional"},
+            {"Riesgo": "Ajuste de Concesión de Aguas y Caudal Ecológico", "Prob": 0.32, "Impacto": 0.65, "Severidad": 20.8, "Categoria": "Regulatorio"},
+            {"Riesgo": "Mantenimiento Mayor por Abrasión en Turbinas", "Prob": 0.48, "Impacto": 0.45, "Severidad": 21.6, "Categoria": "Técnico"}
+        ]
+    }
+}
+
+cfg = perfiles[programa_sel]
+
+# ==============================================================================
+# 4. MOTOR ESTOCÁSTICO MONTE CARLO (CONECTADO AL FILTRO)
+# ==============================================================================
 np.random.seed(42)
 
-# SIMULACIÓN DE MONTE CARLO (Variables estocásticas del caso ECOGEN)
-# 1. Costo logístico por MW (Triangular: min 0.8, moda 1.0, max 1.2 * 820,000 USD)
-costo_logistico = np.random.triangular(0.8 * 820000, 820000, 1.2 * 820000, n_sim)
+# Simulación de Factores de Riesgo (KRIs) e Indicadores de Rendimiento (KPIs)
+kri_licencias = np.random.normal(cfg["lic_mean"], cfg["lic_std"], n_iteraciones)
+kri_logistica = np.random.normal(cfg["log_mean"], cfg["log_std"], n_iteraciones)
+kpi_capacidad = np.random.normal(cfg["cap_mean"], cfg["cap_std"], n_iteraciones)
 
-# 2. Demanda energética regional (Normal: media 14,500 GWh, variabilidad 15%)
-demanda_gwh = np.random.normal(14500, 14500 * 0.15, n_sim)
+# El ROI reacciona estocásticamente a los factores de riesgo
+ruido_mercado = np.random.normal(0, cfg["roi_std"] * 0.6, n_iteraciones)
+roi_simulado = (
+    cfg["roi_mean"]
+    - ((kri_licencias - cfg["lic_mean"]) * 0.05)
+    - ((kri_logistica - cfg["log_mean"]) * 0.14)
+    + ((kpi_capacidad - cfg["cap_mean"]) * 0.09)
+    + ruido_mercado
+)
 
-# 3. Tasa de aprobación ambiental (Uniforme: 60% a 95%)
-aprob_ambiental = np.random.uniform(0.60, 0.95, n_sim)
+# Estructura en DataFrame
+df_sim = pd.DataFrame({
+    "ROI": roi_simulado,
+    "KRI Licenciamiento (Días)": kri_licencias,
+    "KRI Sobrecosto Logístico (%)": kri_logistica,
+    "KPI Capacidad Operativa (%)": kpi_capacidad
+})
 
-# 4. Tasa de interés internacional (Triangular: 7.65%, 8.5%, 9.35%)
-tasa_interes = np.random.triangular(7.65, 8.50, 9.35, n_sim)
+# Métricas probabilísticas
+p10 = np.percentile(roi_simulado, 10)
+p50 = np.percentile(roi_simulado, 50)
+p90 = np.percentile(roi_simulado, 90)
+prob_okr = (roi_simulado >= cfg["okr_target"]).mean() * 100
 
-# 5. Emisiones compensadas (Normal: media 25,000 tCO2, sigma 6,000)
-emisiones_tco2 = np.random.normal(25000, 6000, n_sim)
+# ==============================================================================
+# 5. ENCABEZADO Y TARJETAS MÉTRICAS
+# ==============================================================================
+st.markdown("## ⚡ ECOGEN S.A. - Gestión Estratégica de Riesgos e Incertidumbre")
+st.markdown(f"**Oficina Estratégica de Riesgos (OER)** | Simulación Monte Carlo ({n_iteraciones:,} iteraciones) | **Programa en análisis:** `{programa_sel}`")
+st.caption(cfg["desc"])
 
-# 6. Aceptación Comunitaria / Conflictos (Simulación de impacto reputacional)
-conflictos_activos = np.random.poisson(1.5, n_sim)
-
-# Cálculo de variables dependientes (KPIs y OKRs) aplicando correlaciones empíricas
-# ROI base 12% afectado negativamente por costos logísticos y tasas, positivamente por demanda
-impacto_costo = ((costo_logistico - 820000) / 820000) * 0.05
-impacto_tasa = ((tasa_interes - 8.5) / 8.5) * 0.03
-impacto_demanda = ((demanda_gwh - 14500) / 14500) * 0.04
-
-roi_simulado = (0.12 - impacto_costo - impacto_tasa + impacto_demanda) * 100
-
-# Expansión de Capacidad Solar (Meta +35% afectada por licencias ambientales)
-expansion_capacidad = 35 * (aprob_ambiental / 0.85)
-
-# Métricas Ejecutivas Superiores
-p10_roi = np.percentile(roi_simulado, 10)
-p50_roi = np.percentile(roi_simulado, 50)
-p90_roi = np.percentile(roi_simulado, 90)
-prob_cumplir_roi = (roi_simulado >= 12.0).mean() * 100
-
-col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-col_m1.metric("ROI Esperado (P50)", f"{p50_roi:.2f}%", f"{p50_roi - 12:.2f}% vs Meta (12%)")
-col_m2.metric("Probabilidad Cumplir OKR ROI", f"{prob_cumplir_roi:.1f}%", "Nivel de confianza")
-col_m3.metric("Escenario Pesimista (P10)", f"{p10_roi:.2f}%", "Riesgo en cola")
-col_m4.metric("Escenario Optimista (P90)", f"{p90_roi:.2f}%", "Potencial superior")
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("ROI Esperado (P50)", f"{p50:.2f}%", f"{p50 - cfg['okr_target']:+.2f}% vs Meta")
+col2.metric("Probabilidad Cumplir OKR", f"{prob_okr:.1f}%", f"Meta: ≥{cfg['okr_target']}%")
+col3.metric("Escenario Pesimista (P10)", f"{p10:.2f}%", "Riesgo en cola (VaR)", delta_color="inverse")
+col4.metric("Escenario Optimista (P90)", f"{p90:.2f}%", "Potencial superior")
 
 st.markdown("---")
 
-# Visualización 1 y 2
-col_v1, col_v2 = st.columns(2)
+# ==============================================================================
+# 6. FILA 1: HISTOGRAMA MONTE CARLO Y MATRIZ DE CORRELACIÓN
+# ==============================================================================
+f1_col1, f1_col2 = st.columns(2)
 
-with col_v1:
-    st.subheader("1. Distribución Monte Carlo: ROI del Portafolio")
+with f1_col1:
+    st.markdown("### 1. Distribución Monte Carlo: Retorno sobre Inversión (ROI)")
     fig_hist = go.Figure()
-    fig_hist.add_trace(go.Histogram(x=roi_simulado, nbinsx=35, marker_color="#1f77b4", opacity=0.75, name="Iteraciones"))
-    fig_hist.add_vline(x=12.0, line_dash="dash", line_color="red", annotation_text="Meta OKR (12%)")
-    fig_hist.add_vline(x=p10_roi, line_dash="dot", line_color="orange", annotation_text=f"P10 ({p10_roi:.1f}%)")
-    fig_hist.add_vline(x=p90_roi, line_dash="dot", line_color="green", annotation_text=f"P90 ({p90_roi:.1f}%)")
-    fig_hist.update_layout(xaxis_title="ROI Estimado (%)", yaxis_title="Frecuencia", showlegend=False, height=380)
+    
+    fig_hist.add_trace(go.Histogram(
+        x=df_sim["ROI"],
+        nbinsx=40,
+        name="Iteraciones",
+        marker_color="#1E4D6B",
+        opacity=0.85
+    ))
+    
+    fig_hist.add_vline(x=p10, line_dash="dash", line_color="#D9534F", annotation_text=f"P10: {p10:.1f}%")
+    fig_hist.add_vline(x=p50, line_dash="solid", line_color="#F0AD4E", annotation_text=f"P50: {p50:.1f}%")
+    fig_hist.add_vline(x=p90, line_dash="dash", line_color="#5CB85C", annotation_text=f"P90: {p90:.1f}%")
+    fig_hist.add_vline(x=cfg["okr_target"], line_dash="dot", line_color="#0F2537", annotation_text="Meta OKR")
+
+    fig_hist.update_layout(
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis_title="ROI Estimado (%)",
+        yaxis_title="Frecuencia",
+        showlegend=False,
+        height=360
+    )
     st.plotly_chart(fig_hist, use_container_width=True)
 
-with col_v2:
-    st.subheader("2. Matriz de Sensibilidad: Correlación KRI vs KPI")
-    df_corr = pd.DataFrame({
-        "Costo Logístico (KRI)": costo_logistico,
-        "Tasa de Interés (KRI)": tasa_interes,
-        "Licencias Ambientales (KRI)": aprob_ambiental,
-        "Demanda GWh (KPI)": demanda_gwh,
-        "ROI Portafolio (KPI)": roi_simulado,
-        "Capacidad MW (KPI)": expansion_capacidad
-    }).corr()
+with f1_col2:
+    st.markdown("### 2. Matriz de Sensibilidad: Correlación KRI vs KPI")
+    matriz_corr = df_sim.corr().round(2)
     
-    fig_heat = px.imshow(
-        df_corr,
-        text_auto=".2f",
-        color_continuous_scale="RdBu_r",
-        aspect="auto",
-        title="Correlaciones del Portafolio ECOGEN"
+    fig_corr = px.imshow(
+        matriz_corr,
+        text_auto=True,
+        color_continuous_scale="Blues",
+        aspect="auto"
     )
-    fig_heat.update_layout(height=380)
-    st.plotly_chart(fig_heat, use_container_width=True)
+    fig_corr.update_layout(
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=30, b=20),
+        height=360
+    )
+    st.plotly_chart(fig_corr, use_container_width=True)
 
-# Visualización 3 y 4
-col_v3, col_v4 = st.columns(2)
+# ==============================================================================
+# 7. FILA 2: DIAGRAMA TORNADO Y MAPA DE RIESGOS ESTRATÉGICOS (BURBUJAS)
+# ==============================================================================
+f2_col1, f2_col2 = st.columns(2)
 
-with col_v3:
-    st.subheader("3. Análisis de Sensibilidad (Tornado: Impacto en ROI)")
-    factores = ["Costo Logístico", "Tasa Interés", "Demanda GWh", "Aprobación Licencias"]
-    impacto_max = [1.8, 1.2, 1.5, 0.6]
-    impacto_min = [-1.9, -1.3, -1.4, -0.7]
+with f2_col1:
+    st.markdown("### 3. Diagrama Tornado: Sensibilidad del ROI")
+    
+    # Cálculo de impacto diferencial (P90 - P10) por factor sobre el ROI
+    impacto_lic = (df_sim[df_sim["KRI Licenciamiento (Días)"] > np.percentile(kri_licencias, 80)]["ROI"].mean()
+                   - df_sim[df_sim["KRI Licenciamiento (Días)"] < np.percentile(kri_licencias, 20)]["ROI"].mean())
+    impacto_log = (df_sim[df_sim["KRI Sobrecosto Logístico (%)"] > np.percentile(kri_logistica, 80)]["ROI"].mean()
+                   - df_sim[df_sim["KRI Sobrecosto Logístico (%)"] < np.percentile(kri_logistica, 20)]["ROI"].mean())
+    impacto_cap = (df_sim[df_sim["KPI Capacidad Operativa (%)"] > np.percentile(kpi_capacidad, 80)]["ROI"].mean()
+                   - df_sim[df_sim["KPI Capacidad Operativa (%)"] < np.percentile(kpi_capacidad, 20)]["ROI"].mean())
+    
+    df_tornado = pd.DataFrame({
+        "Variable": ["Retraso Licenciamiento", "Sobrecosto Logístico", "Capacidad Operativa"],
+        "Impacto_ROI": [impacto_lic, impacto_log, impacto_cap]
+    }).sort_values(by="Impacto_ROI", key=abs, ascending=True)
 
-    fig_tor = go.Figure()
-    fig_tor.add_trace(go.Bar(y=factores, x=impacto_max, orientation="h", name="Impacto Favorable", marker_color="#2ca02c"))
-    fig_tor.add_trace(go.Bar(y=factores, x=impacto_min, orientation="h", name="Impacto Desfavorable", marker_color="#d62728"))
-    fig_tor.update_layout(barmode="relative", xaxis_title="Variación en puntos de ROI (%)", height=380)
-    st.plotly_chart(fig_tor, use_container_width=True)
+    colores_tornado = ["#D9534F" if val < 0 else "#2E7D32" for val in df_tornado["Impacto_ROI"]]
 
-with col_v4:
-    st.subheader("4. Cuadrante de Riesgo: Portafolio de Inversión")
-    df_riesgos = pd.DataFrame({
-        "Programa": ["Solar Equinox", "Eólica Andina", "HydroBalance", "Transmisión Regional"],
-        "Probabilidad": [4.2, 3.8, 2.5, 3.1],
-        "Impacto": [4.5, 4.0, 3.2, 3.8],
-        "Inversión_USD_M": [400, 500, 300, 150]
-    })
+    fig_tornado = go.Figure(go.Bar(
+        x=df_tornado["Impacto_ROI"],
+        y=df_tornado["Variable"],
+        orientation='h',
+        marker_color=colores_tornado,
+        text=[f"{val:+.2f}%" for val in df_tornado["Impacto_ROI"]],
+        textposition="outside"
+    ))
+    fig_tornado.update_layout(
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis_title="Desviación Promedio en el ROI (%)",
+        height=360
+    )
+    st.plotly_chart(fig_tornado, use_container_width=True)
+
+with f2_col2:
+    st.markdown("### 4. Matriz de Exposición de Riesgos Críticos")
+    df_riesgos = pd.DataFrame(cfg["riesgos"])
+    
     fig_bubble = px.scatter(
         df_riesgos,
-        x="Probabilidad",
+        x="Prob",
         y="Impacto",
-        size="Inversión_USD_M",
-        color="Programa",
-        text="Programa",
-        range_x=[1, 5],
-        range_y=[1, 5],
-        title="Severidad y Capital en Riesgo (USD Millones)"
+        size="Severidad",
+        color="Categoria",
+        hover_name="Riesgo",
+        text="Riesgo",
+        size_max=38,
+        color_discrete_sequence=["#D9534F", "#0F2537", "#2E7D32", "#F0AD4E"]
     )
-    fig_bubble.update_traces(textposition="top center")
-    fig_bubble.update_layout(height=380)
+    fig_bubble.update_traces(textposition='top center')
+    fig_bubble.update_layout(
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="Probabilidad de Ocurrencia", range=[0.1, 1.0]),
+        yaxis=dict(title="Impacto Estratégico (0-1)", range=[0.2, 1.05]),
+        height=360
+    )
     st.plotly_chart(fig_bubble, use_container_width=True)
-
-# Sección de Storytelling y Decisiones
-st.markdown("---")
-st.subheader("📋 Diagnóstico Ejecutivo para el Consejo Directivo")
-col_d1, col_d2 = st.columns(2)
-
-with col_d1:
-    st.info("""
-    **Hallazgos Clave de la Simulación:**
-    * El ROI esperado se sitúa en torno al valor objetivo, pero existe una probabilidad significativa de caer bajo el umbral P10 debido a volatilidad logística.
-    * El factor de mayor sensibilidad negativa es el costo de transporte hacia zonas no interconectadas.
-    """)
-
-with col_d2:
-    st.success("""
-    **Acciones de Mitigación Recomendadas:**
-    * Implementar contratos forward para transporte e insumos clave.
-    * Fortalecer mesas participativas tempranas para reducir riesgo de retraso en licenciamiento ambiental y social.
-    """)
