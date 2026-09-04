@@ -21,11 +21,16 @@ st.markdown("""
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     /* Barra lateral institucional */
+    /* Barra lateral institucional */
     [data-testid="stSidebar"] {
         background-color: #0F2537;
     }
-    [data-testid="stSidebar"] * {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label, [data-testid="stSidebar"] p {
         color: #FFFFFF !important;
+    }
+    /* Texto oscuro y legible dentro de la lista desplegable */
+    [data-testid="stSidebar"] div[data-baseweb="select"] * {
+        color: #0F2537 !important;
     }
     /* Títulos */
     h1, h2, h3, h4 {
