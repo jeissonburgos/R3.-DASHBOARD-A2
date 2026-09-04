@@ -147,13 +147,13 @@ col_d1, col_d2 = st.columns(2)
 with col_d1:
     st.info("""
     **Hallazgos Clave de la Simulación:**
-    * El ROI esperado se sitúa en torno al valor objetivo, pero existe una probabilidad significativa de caer bajo el umbral P10 debido a volatilidad logística[cite: 2].
+    * El ROI esperado se sitúa en torno al valor objetivo, pero existe una probabilidad significativa de caer bajo el umbral P10 debido a volatilidad logística.
     * El factor de mayor sensibilidad negativa es el costo de transporte hacia zonas no interconectadas.
     """)
 
 with col_d2:
     st.success("""
     **Acciones de Mitigación Recomendadas:**
-    * Implementar contratos forward para transporte e insumos clave[cite: 2].
+    * Implementar contratos forward para transporte e insumos clave.
     * Fortalecer mesas participativas tempranas para reducir riesgo de retraso en licenciamiento ambiental y social.
     """)
