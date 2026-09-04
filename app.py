@@ -14,9 +14,13 @@ st.markdown("""
     .stApp {
         background-color: #F4F6F9;
        }
-    /* Textos claros dentro de la barra lateral */
+    /* Fondo naranja claro para la barra lateral */
+    [data-testid="stSidebar"] {
+        background-color: #FFCC99 !important;
+    }
+    /* Textos oscuros dentro de la barra lateral para contraste con el naranja */
     [data-testid="stSidebar"] * {
-        color: #FFFFFF !important;
+        color: #0F2537 !important;
     }
     /* Color de títulos principales */
     h1, h2, h3 {
@@ -27,6 +31,11 @@ st.markdown("""
 
 # Título y contexto ejecutivo
 st.title("⚡ ECOGEN S.A. - Gestión Estratégica de Riesgos e Incertidumbre")
+st.markdown("""
+**Oficina Estratégica de Riesgos (OER)** | Modelo Cuantitativo Monte Carlo (1.000 iteraciones)  
+Monitoreo de objetivos estratégicos (OKR), indicadores de desempeño (KPI) y factores de riesgo (KRI).
+""")
+st.markdown("---")
 st.markdown("""
 **Oficina Estratégica de Riesgos (OER)** | Modelo Cuantitativo Monte Carlo (1.000 iteraciones)  
 Monitoreo de objetivos estratégicos (OKR), indicadores de desempeño (KPI) y factores de riesgo (KRI).
