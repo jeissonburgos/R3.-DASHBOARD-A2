@@ -20,7 +20,7 @@ st.markdown("""
         background-color: #F4F6F9;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    /* Barra lateral institucional */
+    /* Barra lateral institucional */   
     /* Barra lateral institucional */
     [data-testid="stSidebar"] {
         background-color: #0F2537;
@@ -31,6 +31,12 @@ st.markdown("""
     /* Texto oscuro y legible dentro de la lista desplegable */
     [data-testid="stSidebar"] div[data-baseweb="select"] * {
         color: #0F2537 !important;
+    }
+    /* Slider: valores y números (500 y 5000) siempre fijos y visibles en blanco */
+    [data-testid="stSlider"] * {
+        color: #FFFFFF !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     /* Títulos */
     h1, h2, h3, h4 {
