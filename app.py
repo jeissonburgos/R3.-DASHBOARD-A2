@@ -205,18 +205,45 @@ with f1_col1:
         opacity=0.85
     ))
     
-    fig_hist.add_vline(x=p10, line_dash="dash", line_color="#D9534F", annotation_text=f"P10: {p10:.1f}%")
-    fig_hist.add_vline(x=p50, line_dash="solid", line_color="#F0AD4E", annotation_text=f"P50: {p50:.1f}%")
-    fig_hist.add_vline(x=p90, line_dash="dash", line_color="#5CB85C", annotation_text=f"P90: {p90:.1f}%")
-    fig_hist.add_vline(x=cfg["okr_target"], line_dash="dot", line_color="#0F2537", annotation_text="Meta OKR")
+    # Líneas con posiciones escalonadas, mayor tamaño de letra y fondo blanco para legibilidad total
+    fig_hist.add_vline(
+        x=p10, line_dash="dash", line_color="#D9534F", line_width=2,
+        annotation_text=f"<b>P10: {p10:.1f}%</b>", annotation_position="top left",
+        annotation_font_size=13, annotation_font_color="#D9534F",
+        annotation_bgcolor="rgba(255,255,255,0.9)"
+    )
+    fig_hist.add_vline(
+        x=cfg["okr_target"], line_dash="dot", line_color="#0F2537", line_width=2.5,
+        annotation_text=f"<b>Meta: {cfg['okr_target']:.1f}%</b>", annotation_position="bottom right",
+        annotation_font_size=13, annotation_font_color="#0F2537",
+        annotation_bgcolor="rgba(255,255,255,0.9)"
+    )
+    fig_hist.add_vline(
+        x=p50, line_dash="solid", line_color="#E67E22", line_width=2,
+        annotation_text=f"<b>P50: {p50:.1f}%</b>", annotation_position="top right",
+        annotation_font_size=13, annotation_font_color="#D35400",
+        annotation_bgcolor="rgba(255,255,255,0.9)"
+    )
+    fig_hist.add_vline(
+        x=p90, line_dash="dash", line_color="#27AE60", line_width=2,
+        annotation_text=f"<b>P90: {p90:.1f}%</b>", annotation_position="top right",
+        annotation_font_size=13, annotation_font_color="#1E8449",
+        annotation_bgcolor="rgba(255,255,255,0.9)"
+    )
 
     fig_hist.update_layout(
         template="plotly_white",
-        margin=dict(l=20, r=20, t=30, b=20),
-        xaxis_title="ROI Estimado (%)",
-        yaxis_title="Frecuencia",
+        margin=dict(l=25, r=25, t=35, b=25),
+        xaxis=dict(
+            title=dict(text="ROI Estimado (%)", font=dict(size=14, color="#0F2537")),
+            tickfont=dict(size=12, color="#0F2537")
+        ),
+        yaxis=dict(
+            title=dict(text="Frecuencia", font=dict(size=14, color="#0F2537")),
+            tickfont=dict(size=12, color="#0F2537")
+        ),
         showlegend=False,
-        height=360
+        height=380
     )
     st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -226,14 +253,21 @@ with f1_col2:
     
     fig_corr = px.imshow(
         matriz_corr,
-        text_auto=True,
+        text_auto=".2f",
         color_continuous_scale="Blues",
         aspect="auto"
     )
+    
+    # Texto más grande, negrita y etiquetas de ejes claras
+    fig_corr.update_traces(
+        textfont=dict(size=16, family="Arial")
+    )
     fig_corr.update_layout(
         template="plotly_white",
-        margin=dict(l=20, r=20, t=30, b=20),
-        height=360
+        margin=dict(l=25, r=25, t=35, b=25),
+        xaxis=dict(tickfont=dict(size=12, color="#0F2537")),
+        yaxis=dict(tickfont=dict(size=12, color="#0F2537")),
+        height=380
     )
     st.plotly_chart(fig_corr, use_container_width=True)
 
